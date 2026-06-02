@@ -106,8 +106,8 @@
     <div class="input-group">
       <span class="input-label">Стратегия</span>
       <div class="strat-btns">
-        <button class="strat-btn" data-s="cons">Консерв.</button>
-        <button class="strat-btn active-mod" data-s="mod">Умеренная</button>
+        <button class="strat-btn active-cons" data-s="cons">Консерв.</button>
+        <button class="strat-btn" data-s="mod">Умеренная</button>
         <button class="strat-btn" data-s="agg">Агрессив.</button>
       </div>
     </div>
@@ -191,9 +191,9 @@ var STRATS = {
   agg:  { rateDefault: 12,  rateMin: 8,  rateMax: 20, color: '#ef4444' },
 };
 
-var stratKey = 'mod';
+var stratKey = 'cons';
 var deposit = 5000;
-var monthlyRate = 8;
+var monthlyRate = 5;
 var months = 12;
 
 function fmt(n, dec) {
