@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор доходности — NovaFX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117; --bg-card: #161b26; --bg-input: #1e2535;
+    --border: #2a3245; --border-light: #1e2535;
+    --text: #e8eaf0; --text-secondary: #8892a4; --text-tertiary: #5a6478;
+    --green: #22c55e; --green-bg: rgba(34,197,94,0.1); --green-border: rgba(34,197,94,0.25);
+    --blue: #3b82f6; --blue-bg: rgba(59,130,246,0.1); --blue-border: rgba(59,130,246,0.25);
+    --orange: #f59e0b; --orange-bg: rgba(245,158,11,0.1); --orange-border: rgba(245,158,11,0.25);
+    --red: #ef4444; --red-bg: rgba(239,68,68,0.1); --red-border: rgba(239,68,68,0.25);
+    --radius: 12px; --radius-sm: 8px;
+  }
+  body { font-family: -apple-system,'Segoe UI',sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px 48px; }
+  .container { max-width: 1400px; margin: 0 auto; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+  .logo-text { font-size: 13px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase; }
+  h1 { font-size: 26px; font-weight: 600; margin-bottom: 8px; }
+  .subtitle { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 32px; }
+  .info-bar { background: var(--blue-bg); border: 0.5px solid var(--blue-border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 24px; font-size: 13px; color: #93c5fd; line-height: 1.6; }
+  .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 520px) { .inputs-grid { grid-template-columns: 1fr; } }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+  .input-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .input-field { padding: 10px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); background: var(--bg-input); font-size: 14px; font-weight: 500; color: var(--text); outline: none; width: 100%; }
+  .strat-btns { display: flex; gap: 6px; }
+  .strat-btn { flex: 1; padding: 10px 4px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); background: transparent; font-size: 12px; color: var(--text-secondary); cursor: pointer; font-family: inherit; text-align: center; }
+  .strat-btn.active-cons { background: var(--green-bg); color: var(--green); border-color: var(--green-border); font-weight: 600; }
+  .strat-btn.active-mod  { background: var(--blue-bg);  color: var(--blue);  border-color: var(--blue-border);  font-weight: 600; }
+  .strat-btn.active-agg  { background: var(--red-bg);   color: var(--red);   border-color: var(--red-border);   font-weight: 600; }
+  .sliders-block { margin-bottom: 20px; }
+  .slider-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 520px) { .slider-row { grid-template-columns: 1fr; } }
+  .slider-group { display: flex; flex-direction: column; gap: 5px; }
+  .slider-label-row { display: flex; justify-content: space-between; }
+  .slider-val { font-size: 14px; font-weight: 700; }
+  .param-slider {
+    width: 100%; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    height: 6px; border-radius: 999px;
+    background: var(--border); outline: none;
+    margin: 6px 0;
+  }
+  .param-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--text); cursor: pointer;
+    border: 3px solid var(--bg-input);
+    box-shadow: 0 0 0 1.5px var(--border);
+    margin-top: -8px;
+  }
+  .param-slider::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--text); cursor: pointer;
+    border: 3px solid var(--bg-input);
+    box-shadow: 0 0 0 1.5px var(--border);
+  }
+  .param-slider::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; }
+  .param-slider::-moz-range-track { height: 6px; border-radius: 999px; background: var(--border); }
+  .param-slider::-moz-range-progress { height: 6px; border-radius: 999px; background: currentColor; }
+  .slider-limits { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-tertiary); margin-top: 6px; }
+  .summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 24px; }
+  @media (max-width: 600px) { .summary { grid-template-columns: repeat(2,1fr); } }
+  .sum-card { background: var(--bg-card); border: 0.5px solid var(--border-light); border-radius: var(--radius); padding: 14px 16px; }
+  .sum-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
+  .sum-val { font-size: 18px; font-weight: 600; color: var(--text); }
+  .sum-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+  .c-green .sum-val { color: var(--green); }
+  .c-blue  .sum-val { color: var(--blue); }
+  .c-orange .sum-val { color: var(--orange); }
+  .c-red   .sum-val { color: var(--red); }
+  .section-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 0.5px solid var(--border-light); width: 100%; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { text-align: left; padding: 6px 8px; font-size: 10px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 0.5px solid var(--border); background: var(--bg-card); white-space: nowrap; }
+  td { padding: 5px 8px; border-bottom: 0.5px solid var(--border-light); color: var(--text-secondary); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 500; }
+  .row-profit td { background: var(--bg-card); }
+  .row-year td { background: rgba(59,130,246,0.06); font-weight: 500; }
+  .row-year td:first-child { color: var(--blue); }
+  .disclaimer { margin-top: 24px; font-size: 13px; color: var(--text-secondary); line-height: 1.75; padding: 16px 20px; border: 0.5px solid var(--orange-border); border-radius: var(--radius); background: var(--orange-bg); }
+  .footer { margin-top: 40px; text-align: center; font-size: 12px; color: var(--text-tertiary); }
+  .footer a { color: var(--text-secondary); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo"><div class="logo-dot"></div><span class="logo-text">NovaFX · DigitalNovaLabs</span></div>
+  <h1>Калькулятор доходности</h1>
+  <p class="subtitle">Моделирует рост баланса с учётом ежемесячного компаундинга — реинвестирования прибыли в торговлю.</p>
+
+  <div class="info-bar">Калькулятор показывает теоретическую модель роста капитала при стабильной ежемесячной доходности. Реальные результаты зависят от рыночных условий и могут отличаться.</div>
+
+  <div class="inputs-grid">
+    <div class="input-group">
+      <span class="input-label">Начальный депозит (USD)</span>
+      <input class="input-field" id="in-deposit" type="number" min="500" max="200000" step="500" value="5000">
+    </div>
+    <div class="input-group">
+      <span class="input-label">Стратегия</span>
+      <div class="strat-btns">
+        <button class="strat-btn" data-s="cons">Консерв.</button>
+        <button class="strat-btn active-mod" data-s="mod">Умеренная</button>
+        <button class="strat-btn" data-s="agg">Агрессив.</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sliders-block">
+    <div class="slider-row">
+      <div class="slider-group">
+        <div class="slider-label-row">
+          <span class="input-label">Ожидаемая доходность в месяц</span>
+          <span class="slider-val" id="val-rate" style="color:var(--blue)">8%</span>
+        </div>
+        <input type="range" class="param-slider" id="sl-rate" min="2" max="12" step="0.5" value="8">
+        <div class="slider-limits"><span id="sl-rate-min">2%</span><span id="sl-rate-max">12%</span></div>
+      </div>
+      <div class="slider-group">
+        <div class="slider-label-row">
+          <span class="input-label">Горизонт</span>
+          <span class="slider-val" id="val-months" style="color:var(--blue)">12 мес.</span>
+        </div>
+        <input type="range" class="param-slider" id="sl-months" min="3" max="36" step="1" value="12">
+        <div class="slider-limits"><span>3 мес.</span><span>36 мес.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="sum-card c-green">
+      <div class="sum-label">Итоговый баланс</div>
+      <div class="sum-val" id="s-balance">—</div>
+      <div class="sum-sub">USD на конец периода</div>
+    </div>
+    <div class="sum-card c-blue">
+      <div class="sum-label">Общая прибыль</div>
+      <div class="sum-val" id="s-profit">—</div>
+      <div class="sum-sub">USD за весь период</div>
+    </div>
+    <div class="sum-card c-orange">
+      <div class="sum-label">Общая прибыль</div>
+      <div class="sum-val" id="s-profit-pct">—</div>
+      <div class="sum-sub">% от начального депозита</div>
+    </div>
+    <div class="sum-card">
+      <div class="sum-label">Средний доход</div>
+      <div class="sum-val" id="s-avg">—</div>
+      <div class="sum-sub">USD / месяц (среднее)</div>
+    </div>
+  </div>
+
+  <div class="section-label">Помесячный рост баланса</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Месяц</th>
+          <th>Баланс на начало</th>
+          <th>Доходность</th>
+          <th>Прибыль за месяц</th>
+          <th>Баланс на конец</th>
+          <th>Накопленная прибыль</th>
+          <th>Рост от старта</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <div class="disclaimer">
+    <strong style="color:var(--orange);">⚠ Важно понимать:</strong> Калькулятор показывает теоретическую модель при фиксированной ежемесячной доходности. Реальная торговля отличается — месяцы с высокой прибылью чередуются с периодами просадок. Ни один алгоритм не гарантирует стабильный процент дохода каждый месяц. Используйте калькулятор как инструмент планирования, а не как прогноз.
+  </div>
+
+  <div class="footer">
+    <p>NovaFX · <a href="https://t.me/DigitalNovaLabs" target="_blank">Telegram канал</a> · <a href="https://fxmonitor.online/g/VHI6xGy4?view=profit" target="_blank">Мониторинг 🕯</a></p>
+  </div>
+</div>
+
+<script>
+var STRATS = {
+  cons: { rateDefault: 5,   rateMin: 3,  rateMax: 8,  color: '#22c55e' },
+  mod:  { rateDefault: 8,   rateMin: 5,  rateMax: 12, color: '#3b82f6' },
+  agg:  { rateDefault: 12,  rateMin: 8,  rateMax: 20, color: '#ef4444' },
+};
+
+var stratKey = 'mod';
+var deposit = 5000;
+var monthlyRate = 8;
+var months = 12;
+
+function fmt(n, dec) {
+  dec = dec || 0;
+  return n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+function fillSlider(el, color) {
+  var min = parseFloat(el.min), max = parseFloat(el.max), val = parseFloat(el.value);
+  var pct = (val - min) / (max - min) * 100;
+  el.style.background = 'linear-gradient(to right, ' + color + ' 0%, ' + color + ' ' + pct + '%, var(--border) ' + pct + '%, var(--border) 100%)';
+}
+
+function render() {
+  var s = STRATS[stratKey];
+  var tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+
+  var balance = deposit;
+  var totalProfit = 0;
+
+  for (var m = 1; m <= months; m++) {
+    var balanceStart = balance;
+    var profit = balance * (monthlyRate / 100);
+    balance += profit;
+    totalProfit += profit;
+    var growthPct = ((balance - deposit) / deposit * 100);
+    var isYearEnd = (m % 12 === 0 && m < months);
+
+    var tr = document.createElement('tr');
+    tr.className = isYearEnd ? 'row-year' : 'row-profit';
+    tr.innerHTML =
+      '<td>' + m + '</td>' +
+      '<td>' + fmt(balanceStart, 2) + ' $</td>' +
+      '<td>' + monthlyRate.toFixed(1) + '%</td>' +
+      '<td>+' + fmt(profit, 2) + ' $</td>' +
+      '<td>' + fmt(balance, 2) + ' $</td>' +
+      '<td>+' + fmt(totalProfit, 2) + ' $</td>' +
+      '<td>+' + fmt(growthPct, 1) + '%</td>';
+    tbody.appendChild(tr);
+  }
+
+  // Summary cards
+  document.getElementById('s-balance').textContent = fmt(balance, 2) + ' $';
+  document.getElementById('s-profit').textContent = '+' + fmt(totalProfit, 2) + ' $';
+  document.getElementById('s-profit-pct').textContent = '+' + fmt((balance - deposit) / deposit * 100, 1) + '%';
+  document.getElementById('s-avg').textContent = fmt(totalProfit / months, 2) + ' $';
+}
+
+function updateSliders() {
+  var s = STRATS[stratKey];
+  var slRate = document.getElementById('sl-rate');
+  slRate.min = s.rateMin;
+  slRate.max = s.rateMax;
+  slRate.step = 0.5;
+  slRate.value = s.rateDefault;
+  monthlyRate = s.rateDefault;
+  document.getElementById('val-rate').textContent = s.rateDefault + '%';
+  document.getElementById('val-rate').style.color = s.color;
+  document.getElementById('val-months').style.color = s.color;
+  document.getElementById('sl-rate-min').textContent = s.rateMin + '%';
+  document.getElementById('sl-rate-max').textContent = s.rateMax + '%';
+
+  fillSlider(slRate, s.color);
+  fillSlider(document.getElementById('sl-months'), s.color);
+}
+
+// Strategy buttons
+document.querySelectorAll('.strat-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    stratKey = btn.dataset.s;
+    document.querySelectorAll('.strat-btn').forEach(function(b) { b.className = 'strat-btn'; });
+    btn.classList.add('active-' + stratKey);
+    updateSliders();
+    render();
+  });
+});
+
+// Deposit
+document.getElementById('in-deposit').addEventListener('input', function(e) {
+  deposit = Math.max(0, Math.min(200000, parseInt(e.target.value) || 0));
+  render();
+});
+
+// Rate slider
+document.getElementById('sl-rate').addEventListener('input', function(e) {
+  monthlyRate = parseFloat(e.target.value);
+  document.getElementById('val-rate').textContent = monthlyRate.toFixed(1) + '%';
+  fillSlider(e.target, STRATS[stratKey].color);
+  render();
+});
+
+// Months slider
+document.getElementById('sl-months').addEventListener('input', function(e) {
+  months = parseInt(e.target.value);
+  document.getElementById('val-months').textContent = months + ' мес.';
+  fillSlider(e.target, STRATS[stratKey].color);
+  render();
+});
+
+updateSliders();
+render();
+</script>
+</body>
+</html>
