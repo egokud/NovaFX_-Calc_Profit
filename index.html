@@ -16,6 +16,28 @@
     --red: #ef4444; --red-bg: rgba(239,68,68,0.1); --red-border: rgba(239,68,68,0.25);
     --radius: 12px; --radius-sm: 8px;
   }
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal-box {
+    background: var(--bg-card); border: 0.5px solid var(--orange-border);
+    border-radius: var(--radius); max-width: 520px; width: 100%;
+    padding: 28px 24px; text-align: center;
+  }
+  .modal-icon { font-size: 36px; margin-bottom: 16px; }
+  .modal-title { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 12px; }
+  .modal-text { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px; }
+  .modal-btn {
+    padding: 10px 32px; border-radius: var(--radius-sm);
+    border: 0.5px solid var(--orange-border); background: var(--orange-bg);
+    color: var(--orange); font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+  }
+  .modal-btn:hover { opacity: 0.85; }
   body { font-family: -apple-system,'Segoe UI',sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px 16px 48px; }
   .container { max-width: 1400px; margin: 0 auto; }
   .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
@@ -101,6 +123,20 @@
 </style>
 </head>
 <body>
+
+<div class="modal-overlay" id="disclaimer-modal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠</div>
+    <div class="modal-title">Обратите внимание</div>
+    <div class="modal-text">
+      Калькулятор доходности показывает теоретическую модель роста капитала при фиксированной ежемесячной доходности. Это не прогноз и не гарантия результата.<br><br>
+      Реальная торговля на форекс сопряжена с рисками. Месяцы с прибылью чередуются с периодами просадок. Ни один алгоритм не может гарантировать стабильный процент дохода.<br><br>
+      Используйте калькулятор как инструмент планирования, а не как обещание доходности.
+    </div>
+    <button class="modal-btn" id="modal-ok-btn">Понятно</button>
+  </div>
+</div>
+
 <div class="container">
   <div class="logo"><div class="logo-dot"></div><span class="logo-text">NovaFX · DigitalNovaLabs</span></div>
   <h1>Калькулятор доходности</h1>
@@ -547,6 +583,20 @@ function renderComboChart() {
 ['cons','mod','agg'].forEach(function(key) {
   document.getElementById('combo-dep-' + key).addEventListener('input', function(e) {
     var val = Math.max(0, parseInt(e.target.value) || 0);
+
+    // Считаем сумму двух других стратегий
+    var otherSum = 0;
+    if (key !== 'cons') otherSum += comboDepCons;
+    if (key !== 'mod')  otherSum += comboDepMod;
+    if (key !== 'agg')  otherSum += comboDepAgg;
+
+    // Не даём превысить депозит
+    var maxVal = Math.max(0, deposit - otherSum);
+    if (val > maxVal) {
+      val = maxVal;
+      e.target.value = val;
+    }
+
     if (key === 'cons') comboDepCons = val;
     if (key === 'mod')  comboDepMod = val;
     if (key === 'agg')  comboDepAgg = val;
@@ -649,6 +699,10 @@ document.getElementById('sl-months').addEventListener('input', function(e) {
   document.getElementById('val-months').textContent = months + ' мес.';
   fillSlider(e.target, STRATS[stratKey].color);
   render();
+});
+
+document.getElementById('modal-ok-btn').addEventListener('click', function() {
+  document.getElementById('disclaimer-modal').classList.add('hidden');
 });
 
 updateSliders();
